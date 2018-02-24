@@ -47,24 +47,6 @@
 		color: #4ea0cc;
 	}
 
-	.drag .bgc {}
-
-	.drag .bgc li {
-		width: 60px;
-		height: 12px;
-		background: #fff;
-		margin: 6px 0;
-	}
-
-	.drag .bgc li:nth-child(2) {
-		width: 55px;
-		background: #c9e5f2;
-	}
-
-	.drag .bgc li:nth-child(3) {
-		width: 50px;
-		background: #8ac6e2;
-	}
 
 	.img-wrapper {
 		overflow: scroll;
@@ -84,9 +66,6 @@
 		width: 48px;
 	}
 
-	.aab {
-		align-self: baseline;
-	}
 
 	.circle {
 		width: 16px;
@@ -97,11 +76,11 @@
 		background-size: cover;
 	}
 
-	footer {
-		position: absolute;
-		bottom: 0;
-		color: #fff;
-		padding: 10px;
+	.item-img {
+		width: 48px;
+		height: 48px;
+		background-repeat: no-repeat;
+		background-position: 50% 50%;
 	}
 </style>
 
@@ -111,20 +90,16 @@
 			Minpic for Mac
 		</header>
 		<section @click="aaa" class="drag">
-			<!-- <ul class="bgc">
-				<li></li>
-				<li></li>
-				<li></li>
-			</ul> -->
 			<ul class="img-wrapper">
 				<li class="item" v-for="item in data">
 					<div class="item-wrap" style="display:flex;height:48px;">
-						<img :src="item.path" />
+						<div class="item-img" :style="item.style"></div>
 						<div class="aab" style="margin-left:10px;">
-							<p style="color:#fff;">{{item.basename}}</p>
+							<p style="color:#fff;padding-top:4px;font-size:14px;">{{item.basename}}</p>
 							<p v-if="item.status === 0" style="color:#6defc9;font-size:12px;">
-								<span>{{item.size}} ({{item.ratio}})</span>
-							</p>	
+								<span>-{{((item.inputSize - item.outputSize) / 1000).toFixed(2)}}k</span>
+								<span>({{((1 - item.ratio) * 100).toFixed(1)}}%)</span>
+							</p>
 						</div>
 					</div>
 					<div v-if="item.status === 0" class="circle"></div>
@@ -132,12 +107,6 @@
 			</ul>
 			<!-- <p>拖拽PNG/JPG文件到这里!</p> -->
 		</section>
-		<section>
-			<ul></ul>
-		</section>
-		<footer>
-			<p>0个任务</p>
-		</footer>
 	</div>
 	<script>
 		// You can also require other files to run in this process

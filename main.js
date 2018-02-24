@@ -13,6 +13,7 @@ const path = require('path')
 const url = require('url')
 const md5 = require('md5')
 const glob = require('glob')
+const sizeOf = require('image-size')
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
@@ -68,25 +69,46 @@ app.on('activate', function () {
 // code. You can also put them in separate files and require them here.
 
 electron.ipcMain.on('asynchronous-message', (event, arg) => {
-	// console.log(arg) // prints "ping"
 	let source = electron.dialog.showOpenDialog({
 		properties: ['openFile', 'openDirectory', 'multiSelections']
 	})[0]
 
 
 
-	let minList = glob.sync(path.resolve(source, '**/*.@(jpg|png|jpeg)'), {
-		// ignore: [path.resolve(process.cwd(), 'node_modules/**')]
-	})
+	let minList = glob.sync(path.resolve(source, '**/*.@(jpg|png|jpeg)'));
 
 	minList = minList.map((item) => {
 		return {
 			path: item,
 			basename: path.basename(item),
-			size: fs.statSync(item).size,
-			id: md5(item)
+			id: md5(item),
+			width: sizeOf(item).width,
+			height: sizeOf(item).height,
+			progress: '20%'
 		}
 	})
+	// console.log(minList)
+	// let input = {
+	// 	size: 421891
+	// }
+	// let output = {
+	// 	ratio: 0.441923,
+	// 	size: 12345
+	// };
+	// minList.forEach(item => {
+	// 	let time = parseInt(Math.random() * 3000);
+	// 	setTimeout(() => {
+	// 		event.sender.send('download-success', {
+	// 			id: item.id,
+	// 			status: 0,
+	// 			ratio: output.ratio,
+	// 			inputSize: input.size,
+	// 			outputSize: output.size
+	// 		})
+	// 	}, time)
+	// })
+	event.sender.send('asynchronous-reply', minList)
+
 	let token = new Buffer('api:' + 'sn07kskC9G9n-PCTbZXSgpH2IXKXvYxS').toString('base64'); // prep key
 	minList.forEach((item) => {
 		let buf = fs.readFileSync(item.path);
@@ -113,17 +135,18 @@ electron.ipcMain.on('asynchronous-message', (event, arg) => {
 					console.log(err)
 				})
 				.on('end', function () {
-					console.log('下载完成')
+					console.log('下载完成');
 					event.sender.send('download-success', {
 						id: item.id,
 						status: 0,
-						ratio: `${(1 - output.ratio).toFixed(2) * 100}%`,
-						size: `-${((input.size - output.size) / 1000).toFixed(2)}k`
+						ratio: output.ratio,
+						inputSize: input.size,
+						outputSize: output.size
 					})
 				})
 				.pipe(fs.createWriteStream(item.path));
 		});
 	})
-	event.sender.send('asynchronous-reply', minList)
+
 
 })

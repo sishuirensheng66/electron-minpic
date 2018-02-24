@@ -7,12 +7,19 @@ var app = new Vue({
     el: '#app',
     data: {
         message: 'Hello Vue!',
-        data: [{
-            path : '/Users/BraisedCakes/Desktop/tinypng_output/logo.jpg',
-            basename : 'logo.jpg',
-            ratio : '1.5%',
-            size : '-0.13k'
-        }]
+        data: [
+            //     {
+            //     path: '/Users/BraisedCakes/Desktop/image.png',
+            //     basename: 'logo.jpg',
+            //     ratio: '1.5%',
+            //     size: '-0.13k',
+            //     status: 0,
+            //     style: {
+            //         'background-image': 'url(/Users/BraisedCakes/Desktop/image.png)',
+            //         'background-size': 'contain'
+            //     }
+            // }
+        ]
     },
     methods: {
         aaa() {
@@ -23,27 +30,20 @@ var app = new Vue({
 })
 
 ipcRenderer.on('asynchronous-reply', (event, arg) => {
-    console.log(arg) // prints "pong"
-    arg.forEach((item) => {
-        item.name = '';
-        item.size = '';
-        item.ratio = '';
-        item.status = '';
-    })
+    arg.forEach(item => {
+        item.style = {
+            'background-image': `url(${item.path})`,
+            'background-size': (item.width < 48 && item.height < 48) ? 'auto' : 'contain'
+        }
+    });
     app.data = arg;
-
-    console.log(arg)
-})
+});
 
 
 ipcRenderer.on('download-success', (event, arg) => {
-    console.log(arg)
     const index = app.data.findIndex((item) => {
         return item.id == arg.id
     });
-    app.data[index].name = '下载完成';
-    app.data[index].size = arg.size;
-    app.data[index].ratio = arg.ratio;
-    app.data[index].status = 0;
-    console.log(app.data)
+    const item = app.data[index];
+    app.$set(app.data, index, Object.assign(item, arg));
 });
