@@ -16,20 +16,30 @@ var app = new Vue({
         }
     }
 })
-
-
-ipcRenderer.on('downloadSuccess', (event, arg) => {
-    const index = getIndex(arg.id);
-    const item = getItem(index);
-    app.$set(app.data, index, Object.assign(item, arg));
-    // $('.leftcircle').css('-webkit-transform', `rotate(${45 +arg.progress * 180}deg)`);
-});
+/**
+ * 上传完成
+ */
 ipcRenderer.on('uploadSuccess', (event, arg) => {
     const index = getIndex(arg.id);
     const item = getItem(index);
     app.$set(app.data, index, Object.assign(item, arg));
-    // $('.rightcircle').css('-webkit-transform', `rotate(${45 +arg.progress * 180}deg)`);
+
+    
 });
+/**
+ * 下载完成
+ */
+ipcRenderer.on('downloadSuccess', (event, arg) => {
+    const index = getIndex(arg.id);
+    const item = getItem(index);
+
+    if(arg.progressDownload == 1){
+        arg.status = 3;
+    }
+
+    app.$set(app.data, index, Object.assign(item, arg));
+});
+
 
 
 ipcRenderer.on('asynchronous-reply', (event, arg) => {

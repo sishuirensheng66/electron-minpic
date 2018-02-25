@@ -85,15 +85,15 @@
 
 
 	.circleProgress_wrapper {
-		width: 20px;
-		height: 20px;
+		width: 16px;
+		height: 16px;
 		position: relative;
 		border: 1px solid #fff;
 		border-radius: 50%;
 	}
 
 	.circleProgress {
-		border: 10px solid #fff;
+		border: 8px solid #fff;
 		border-radius: 50%;
 		position: absolute;
 		top: 0;
@@ -101,8 +101,8 @@
 	}
 
 	.wrapper {
-		width: 10px;
-		height: 20px;
+		width: 8px;
+		height: 16px;
 		position: absolute;
 		top: 0;
 		overflow: hidden;
@@ -117,15 +117,15 @@
 	}
 
 	.rightcircle {
-		border-top: 10px solid transparent;
-		border-right: 10px solid transparent;
+		border-top: 8px solid transparent;
+		border-right: 8px solid transparent;
 		right: 0;
 
 	}
 
 	.leftcircle {
-		border-bottom: 10px solid transparent;
-		border-left: 10px solid transparent;
+		border-bottom: 8px solid transparent;
+		border-left: 8px solid transparent;
 		left: 0;
 	}
 </style>
@@ -142,22 +142,25 @@
 						<div class="item-img" :style="item.style"></div>
 						<div class="aab" style="margin-left:10px;">
 							<p style="color:#fff;padding-top:4px;font-size:14px;">{{item.basename}}</p>
-							<p v-if="item.status === 0" style="color:#6defc9;font-size:12px;">
+							<p v-if="item.progressDownload === 1" style="color:#6defc9;font-size:12px;">
 								<span>-{{((item.inputSize - item.outputSize) / 1000).toFixed(2)}}k</span>
 								<span>({{((1 - item.ratio) * 100).toFixed(1)}}%)</span>
 							</p>
 						</div>
 					</div>
-					<div class="circleProgress_wrapper">
+					<div v-if="item.progressDownload === 1" class="circle"></div>
+					<div  v-if="item.progressDownload !== 1" class="circleProgress_wrapper">
 						<div class="wrapper right">
 							<div :style="{'-webkit-transform' : 'rotate(' + (45 + item.progressUpload * 180) + 'deg)'}" class="circleProgress rightcircle"></div>
 						</div>
 						<div class="wrapper left">
-							<div :style="{'-webkit-transform' : 'rotate(' + (45 + item.progressDownload * 180) + 'deg)'}" class="circleProgress leftcircle"></div>
+							<div  :style="{'-webkit-transform' : 'rotate(' + (45 + item.progressDownload * 180) + 'deg)'}" class="circleProgress leftcircle"></div>
 						</div>
 					</div>
 				</li>
 			</ul>
+
+
 			<!-- <p>拖拽PNG/JPG文件到这里!</p> -->
 		</section>
 	</div>
