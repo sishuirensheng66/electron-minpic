@@ -25,7 +25,7 @@ function createWindow() {
 		// titleBarStyle: 'hidden',
 		// frame: false,
 		width: 800,
-		height: 500
+		height: 320
 	})
 	mainWindow.setResizable(true)
 	// and load the index.html of the app.
@@ -34,6 +34,10 @@ function createWindow() {
 		protocol: 'file:',
 		slashes: true
 	}));
+	mainWindow.webContents.on('did-finish-load', () => {
+
+	});
+
 	// Emitted when the window is closed.
 	mainWindow.on('closed', function () {
 		// Dereference the window object, usually you would store windows
@@ -41,6 +45,7 @@ function createWindow() {
 		// when you should delete the corresponding element.
 		mainWindow = null
 	})
+
 }
 
 // This method will be called when Electron has finished
@@ -68,12 +73,12 @@ app.on('activate', function () {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 
-electron.ipcMain.on('asynchronous-message', (event, arg) => {
+electron.ipcMain.on('open-file', (event, arg) => {
 	let source = electron.dialog.showOpenDialog({
 		properties: ['openFile', 'openDirectory', 'multiSelections']
 	})[0]
 
-
+	console.log(99999)
 
 	let minList = glob.sync(path.resolve(source, '**/*.@(jpg|png|jpeg)'));
 
@@ -84,69 +89,97 @@ electron.ipcMain.on('asynchronous-message', (event, arg) => {
 			id: md5(item),
 			width: sizeOf(item).width,
 			height: sizeOf(item).height,
-			progress: '20%'
+			// progress: '20%'
 		}
 	})
 	// console.log(minList)
-	// let input = {
-	// 	size: 421891
-	// }
-	// let output = {
-	// 	ratio: 0.441923,
-	// 	size: 12345
-	// };
-	// minList.forEach(item => {
-	// 	let time = parseInt(Math.random() * 3000);
-	// 	setTimeout(() => {
-	// 		event.sender.send('download-success', {
-	// 			id: item.id,
-	// 			status: 0,
-	// 			ratio: output.ratio,
-	// 			inputSize: input.size,
-	// 			outputSize: output.size
-	// 		})
-	// 	}, time)
-	// })
-	event.sender.send('asynchronous-reply', minList)
-
-	let token = new Buffer('api:' + 'sn07kskC9G9n-PCTbZXSgpH2IXKXvYxS').toString('base64'); // prep key
-	minList.forEach((item) => {
-		let buf = fs.readFileSync(item.path);
-		request.post({
-			url: 'https://api.tinypng.com/shrink',
-			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded',
-				'Authorization': 'Basic ' + token
-			},
-			strictSSL: false,
-			body: buf
-		}, function (err, res, body) {
-			console.log(err)
-			console.log(body)
-			let {
-				input,
-				output
-			} = JSON.parse(body)
-			progress(request(output.url), {})
-				.on('progress', function (state) {
-					console.log('progress', state);
-				})
-				.on('error', function (err) {
-					console.log(err)
-				})
-				.on('end', function () {
-					console.log('下载完成');
-					event.sender.send('download-success', {
+	let input = {
+		size: 421891
+	}
+	let output = {
+		ratio: 0.441923,
+		size: 12345
+	};
+	minList.forEach(item => {
+		let time = parseInt(Math.random() * 3000);
+		setTimeout(() => {
+			event.sender.send('download-success', {
+				id: item.id,
+				status: 0,
+				ratio: output.ratio,
+				inputSize: input.size,
+				outputSize: output.size
+			})
+		}, time);
+		setTimeout(() => {
+			mainWindow.webContents.send('uploadSuccess', {
+				id: item.id,
+				status: 0,
+				progressUpload: 1
+			});
+			setTimeout(() => {
+				mainWindow.webContents.send('downloadSuccess', {
+					id: item.id,
+					status: 0,
+					progressDownload: 0.3
+				});
+				setTimeout(() => {
+					mainWindow.webContents.send('downloadSuccess', {
 						id: item.id,
 						status: 0,
-						ratio: output.ratio,
-						inputSize: input.size,
-						outputSize: output.size
-					})
-				})
-				.pipe(fs.createWriteStream(item.path));
-		});
+						progressDownload: 0.6
+					});
+					setTimeout(() => {
+						mainWindow.webContents.send('downloadSuccess', {
+							id: item.id,
+							status: 0,
+							progressDownload: 1
+						});
+					}, 500)
+				}, 500)
+			}, 500)
+		}, 500)
 	})
+	event.sender.send('asynchronous-reply', minList)
+	return;
+	// let token = new Buffer('api:' + 'sn07kskC9G9n-PCTbZXSgpH2IXKXvYxS').toString('base64'); // prep key
+	// minList.forEach((item) => {
+	// 	let buf = fs.readFileSync(item.path);
+	// 	request.post({
+	// 		url: 'https://api.tinypng.com/shrink',
+	// 		headers: {
+	// 			'Content-Type': 'application/x-www-form-urlencoded',
+	// 			'Authorization': 'Basic ' + token
+	// 		},
+	// 		strictSSL: false,
+	// 		body: buf
+	// 	}, function (err, res, body) {
+	// 		console.log(err)
+	// 		console.log(body)
+	// 		let {
+	// 			input,
+	// 			output
+	// 		} = JSON.parse(body)
+	// 		progress(request(output.url), {})
+	// 			.on('progress', function (state) {
+	// 				console.log('progress', state);
+	// 			})
+	// 			.on('error', function (err) {
+	// 				console.log(err)
+	// 			})
+	// 			.on('end', function () {
+	// 				console.log('下载完成');
+	// 				event.sender.send('download-success', {
+	// 					id: item.id,
+	// 					status: 0,
+	// 					ratio: output.ratio,
+	// 					inputSize: input.size,
+	// 					outputSize: output.size
+	// 				})
+	// 			})
+	// 			.pipe(fs.createWriteStream(item.path));
+	// 	});
+	// })
 
 
 })

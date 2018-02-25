@@ -1,33 +1,36 @@
 const {
     ipcRenderer
 } = require('electron')
-// console.log(ipcRenderer.sendSync('synchronous-message', 'ping')) // prints "pong"
 const Vue = require('vue/dist/vue.js')
+const $ = require('jquery')
+
+
 var app = new Vue({
     el: '#app',
     data: {
-        message: 'Hello Vue!',
-        data: [
-            //     {
-            //     path: '/Users/BraisedCakes/Desktop/image.png',
-            //     basename: 'logo.jpg',
-            //     ratio: '1.5%',
-            //     size: '-0.13k',
-            //     status: 0,
-            //     style: {
-            //         'background-image': 'url(/Users/BraisedCakes/Desktop/image.png)',
-            //         'background-size': 'contain'
-            //     }
-            // }
-        ]
+        data: [{}, {}]
     },
     methods: {
-        aaa() {
-            ipcRenderer.send('asynchronous-message', 'pin111g')
-            console.log(999);
+        openFile() {
+            ipcRenderer.send('open-file', '点击了拖拽')
         }
     }
 })
+
+
+ipcRenderer.on('downloadSuccess', (event, arg) => {
+    const index = getIndex(arg.id);
+    const item = getItem(index);
+    app.$set(app.data, index, Object.assign(item, arg));
+    // $('.leftcircle').css('-webkit-transform', `rotate(${45 +arg.progress * 180}deg)`);
+});
+ipcRenderer.on('uploadSuccess', (event, arg) => {
+    const index = getIndex(arg.id);
+    const item = getItem(index);
+    app.$set(app.data, index, Object.assign(item, arg));
+    // $('.rightcircle').css('-webkit-transform', `rotate(${45 +arg.progress * 180}deg)`);
+});
+
 
 ipcRenderer.on('asynchronous-reply', (event, arg) => {
     arg.forEach(item => {
@@ -41,9 +44,21 @@ ipcRenderer.on('asynchronous-reply', (event, arg) => {
 
 
 ipcRenderer.on('download-success', (event, arg) => {
-    const index = app.data.findIndex((item) => {
-        return item.id == arg.id
-    });
-    const item = app.data[index];
+    const index = getIndex(arg.id);
+    const item = getItem(index);
     app.$set(app.data, index, Object.assign(item, arg));
 });
+
+
+
+
+function getIndex(id) {
+    const index = app.data.findIndex((item) => {
+        return item.id == id
+    });
+    return index;
+};
+
+function getItem(index) {
+    return app.data[index];
+}
