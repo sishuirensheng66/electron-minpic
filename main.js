@@ -1,34 +1,33 @@
+
 const electron = require('electron')
 const Minpic = require('./minpic')
-// let noti = new Notification('Hello from OS X', {body: 'It Works!'});
-// let noti.addEventListener('click', () => console.log('Got a click.'));
-// Module to control application life.
 const app = electron.app
 const fs = require('fs')
 const request = require('request')
 const progress = require('request-progress')
-// Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow
 const path = require('path')
 const url = require('url')
 const md5 = require('md5')
 const glob = require('glob')
 const sizeOf = require('image-size')
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
+const {
+	IMAGE_STATUS
+} = require('./const.js')
 let mainWindow
 
 function createWindow() {
-	// Create the browser window.
+
 	mainWindow = new BrowserWindow({
 		// transparent: true,
 		// titleBarStyle: 'hidden',
 		// frame: false,
 		width: 800,
-		height: 320
+		height: 320,
+		icon: '/Users/BraisedCakes/Desktop/tinypng_output/git_white.png'
 	})
 	mainWindow.setResizable(true)
-	// and load the index.html of the app.
+
 	mainWindow.loadURL(url.format({
 		pathname: path.join(__dirname, 'index.html'),
 		protocol: 'file:',
@@ -38,47 +37,28 @@ function createWindow() {
 
 	});
 
-	// Emitted when the window is closed.
 	mainWindow.on('closed', function () {
-		// Dereference the window object, usually you would store windows
-		// in an array if your app supports multi windows, this is the time
-		// when you should delete the corresponding element.
 		mainWindow = null
 	})
 
 }
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.on('ready', createWindow)
-
-// Quit when all windows are closed.
 app.on('window-all-closed', function () {
-	// On OS X it is common for applications and their menu bar
-	// to stay active until the user quits explicitly with Cmd + Q
 	if (process.platform !== 'darwin') {
 		app.quit()
 	}
 })
 
 app.on('activate', function () {
-	// On OS X it's common to re-create a window in the app when the
-	// dock icon is clicked and there are no other windows open.
 	if (mainWindow === null) {
 		createWindow()
 	}
 })
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
-
 electron.ipcMain.on('open-file', (event, arg) => {
 	let source = electron.dialog.showOpenDialog({
 		properties: ['openFile', 'openDirectory', 'multiSelections']
 	})[0]
-
-	console.log(99999)
 
 	let minList = glob.sync(path.resolve(source, '**/*.@(jpg|png|jpeg)'));
 
@@ -89,97 +69,78 @@ electron.ipcMain.on('open-file', (event, arg) => {
 			id: md5(item),
 			width: sizeOf(item).width,
 			height: sizeOf(item).height,
-			// progress: '20%'
+			status: IMAGE_STATUS.processIng
 		}
 	})
-	// console.log(minList)
-	let input = {
-		size: 421891
-	}
-	let output = {
-		ratio: 0.441923,
-		size: 12345
-	};
-	minList.forEach(item => {
-		let time = parseInt(Math.random() * 3000);
-		setTimeout(() => {
-			event.sender.send('download-success', {
-				id: item.id,
-				status: 0,
-				ratio: output.ratio,
-				inputSize: input.size,
-				outputSize: output.size
-			})
-		}, time);
-		setTimeout(() => {
-			mainWindow.webContents.send('uploadSuccess', {
-				id: item.id,
-				status: 0,
-				progressUpload: 1
-			});
-			setTimeout(() => {
-				mainWindow.webContents.send('downloadSuccess', {
+
+	mainWindow.webContents.send('getImageList', minList)
+	
+	let token = new Buffer('api:' + 'sn07kskC9G9n-PCTbZXSgpH2IXKXvYxS').toString('base64'); // prep key
+	minList.forEach((item) => {
+		let buf = fs.readFileSync(item.path);
+		request.post({
+			url: 'https://api.tinypng.com/shrink',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+				'Authorization': 'Basic ' + token
+			},
+			strictSSL: false,
+			body: buf
+		}, function (err, res, body) {
+			//上传失败
+			
+			if (err) {
+				console.log(err)
+				mainWindow.webContents.send('push', {
 					id: item.id,
-					status: 0,
-					progressDownload: 0.3
+					status: IMAGE_STATUS.error
 				});
-				setTimeout(() => {
-					mainWindow.webContents.send('downloadSuccess', {
+				return;
+			} else {
+				mainWindow.webContents.send('push', {
+					id: item.id,
+					status: IMAGE_STATUS.processIng,
+					progressUpload: 1
+				});
+			}
+
+			console.log(body);
+
+			let {
+				input,
+				output
+			} = JSON.parse(body)
+
+			
+			//下载
+			progress(request(output.url), {})
+				.on('progress', function (state) {
+					console.log('progress', state);
+					mainWindow.webContents.send('push', {
 						id: item.id,
-						status: 0,
-						progressDownload: 0.6
+						status: IMAGE_STATUS.processIng,
+						progressDownload: state.percent.toFixed(2),
 					});
-					setTimeout(() => {
-						mainWindow.webContents.send('downloadSuccess', {
-							id: item.id,
-							status: 0,
-							progressDownload: 1
-						});
-					}, 500)
-				}, 500)
-			}, 500)
-		}, 500)
-	})
-	event.sender.send('asynchronous-reply', minList)
-	return;
-	// let token = new Buffer('api:' + 'sn07kskC9G9n-PCTbZXSgpH2IXKXvYxS').toString('base64'); // prep key
-	// minList.forEach((item) => {
-	// 	let buf = fs.readFileSync(item.path);
-	// 	request.post({
-	// 		url: 'https://api.tinypng.com/shrink',
-	// 		headers: {
-	// 			'Content-Type': 'application/x-www-form-urlencoded',
-	// 			'Authorization': 'Basic ' + token
-	// 		},
-	// 		strictSSL: false,
-	// 		body: buf
-	// 	}, function (err, res, body) {
-	// 		console.log(err)
-	// 		console.log(body)
-	// 		let {
-	// 			input,
-	// 			output
-	// 		} = JSON.parse(body)
-	// 		progress(request(output.url), {})
-	// 			.on('progress', function (state) {
-	// 				console.log('progress', state);
-	// 			})
-	// 			.on('error', function (err) {
-	// 				console.log(err)
-	// 			})
-	// 			.on('end', function () {
-	// 				console.log('下载完成');
-	// 				event.sender.send('download-success', {
-	// 					id: item.id,
-	// 					status: 0,
-	// 					ratio: output.ratio,
-	// 					inputSize: input.size,
-	// 					outputSize: output.size
-	// 				})
-	// 			})
-	// 			.pipe(fs.createWriteStream(item.path));
-	// 	});
-	// })
-
-
-})
+				})
+				.on('error', function (err) {
+					console.log('下载失败', err)
+					mainWindow.webContents.send('push', {
+						id: item.id,
+						status: IMAGE_STATUS.error
+					});
+				})
+				.on('end', function () {
+					console.log('下载完成')
+					mainWindow.webContents.send('push', {
+						id: item.id,
+						status: IMAGE_STATUS.success,
+						progressDownload: 1,
+						ratio: output.ratio,
+						inputSize: input.size,
+						outputSize: output.size
+					});
+				})
+				.pipe(fs.createWriteStream(item.path));
+		});
+	});
+});

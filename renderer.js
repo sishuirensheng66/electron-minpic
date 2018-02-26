@@ -3,12 +3,14 @@ const {
 } = require('electron')
 const Vue = require('vue/dist/vue.js')
 const $ = require('jquery')
-
+const {
+    IMAGE_STATUS
+} = require('./const.js')
 
 var app = new Vue({
     el: '#app',
     data: {
-        data: [{}, {}]
+        data: []
     },
     methods: {
         openFile() {
@@ -17,32 +19,27 @@ var app = new Vue({
     }
 })
 /**
- * 上传完成
+ * 某张图片上传中
  */
-ipcRenderer.on('uploadSuccess', (event, arg) => {
+ipcRenderer.on('push', (event, arg) => {
     const index = getIndex(arg.id);
     const item = getItem(index);
     app.$set(app.data, index, Object.assign(item, arg));
-
-    
+    console.log(arg)
 });
+
 /**
- * 下载完成
+ * 所有都done， 不管成功还是失败
  */
-ipcRenderer.on('downloadSuccess', (event, arg) => {
-    const index = getIndex(arg.id);
-    const item = getItem(index);
+ipcRenderer.on('allDone', (event, arg) => {
+    // alert(999)
+    // new Notification('标题', {
+    //     body: '通知正文内容'
+    // })
 
-    if(arg.progressDownload == 1){
-        arg.status = 3;
-    }
-
-    app.$set(app.data, index, Object.assign(item, arg));
 });
 
-
-
-ipcRenderer.on('asynchronous-reply', (event, arg) => {
+ipcRenderer.on('getImageList', (event, arg) => {
     arg.forEach(item => {
         item.style = {
             'background-image': `url(${item.path})`,
@@ -51,16 +48,6 @@ ipcRenderer.on('asynchronous-reply', (event, arg) => {
     });
     app.data = arg;
 });
-
-
-ipcRenderer.on('download-success', (event, arg) => {
-    const index = getIndex(arg.id);
-    const item = getItem(index);
-    app.$set(app.data, index, Object.assign(item, arg));
-});
-
-
-
 
 function getIndex(id) {
     const index = app.data.findIndex((item) => {
