@@ -36,7 +36,6 @@ ipcRenderer.on('allDone', (event, arg) => {
     // new Notification('标题', {
     //     body: '通知正文内容'
     // })
-
 });
 
 ipcRenderer.on('getImageList', (event, arg) => {
@@ -46,7 +45,7 @@ ipcRenderer.on('getImageList', (event, arg) => {
             'background-size': (item.width < 48 && item.height < 48) ? 'auto' : 'contain'
         }
     });
-    app.data = arg;
+    app.data.push(...arg);
 });
 
 function getIndex(id) {

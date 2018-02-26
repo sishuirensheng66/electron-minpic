@@ -1,4 +1,3 @@
-
 const electron = require('electron')
 const Minpic = require('./minpic')
 const app = electron.app
@@ -16,6 +15,9 @@ const {
 } = require('./const.js')
 let mainWindow
 
+let minList = []; //图片列表
+let minIndex = 0;
+
 function createWindow() {
 
 	mainWindow = new BrowserWindow({
@@ -32,10 +34,10 @@ function createWindow() {
 		pathname: path.join(__dirname, 'index.html'),
 		protocol: 'file:',
 		slashes: true
-	}));
+	}))
 	mainWindow.webContents.on('did-finish-load', () => {
 
-	});
+	})
 
 	mainWindow.on('closed', function () {
 		mainWindow = null
@@ -55,12 +57,25 @@ app.on('activate', function () {
 	}
 })
 
+
+
+function cb() {
+	minIndex++;
+	if (minIndex == minList.length) {
+		//如果所有队列均执行完毕，则调取系统通知
+		new electron.Notification({
+			title: 'electron-minpic',
+			body: '队列处理完成'
+		}).show()
+	}
+}
+
+
 electron.ipcMain.on('open-file', (event, arg) => {
 	let source = electron.dialog.showOpenDialog({
 		properties: ['openFile', 'openDirectory', 'multiSelections']
 	})[0]
-
-	let minList = glob.sync(path.resolve(source, '**/*.@(jpg|png|jpeg)'));
+	minList = glob.sync(path.resolve(source, '**/*.@(jpg|png|jpeg)'))
 
 	minList = minList.map((item) => {
 		return {
@@ -74,10 +89,10 @@ electron.ipcMain.on('open-file', (event, arg) => {
 	})
 
 	mainWindow.webContents.send('getImageList', minList)
-	
-	let token = new Buffer('api:' + 'sn07kskC9G9n-PCTbZXSgpH2IXKXvYxS').toString('base64'); // prep key
+
+	let token = new Buffer('api:' + 'sn07kskC9G9n-PCTbZXSgpH2IXKXvYxS').toString('base64') // prep key
 	minList.forEach((item) => {
-		let buf = fs.readFileSync(item.path);
+		let buf = fs.readFileSync(item.path)
 		request.post({
 			url: 'https://api.tinypng.com/shrink',
 			headers: {
@@ -88,49 +103,46 @@ electron.ipcMain.on('open-file', (event, arg) => {
 			body: buf
 		}, function (err, res, body) {
 			//上传失败
-			
 			if (err) {
 				console.log(err)
 				mainWindow.webContents.send('push', {
 					id: item.id,
 					status: IMAGE_STATUS.error
-				});
-				return;
+				})
+				cb();
+				return
 			} else {
 				mainWindow.webContents.send('push', {
 					id: item.id,
 					status: IMAGE_STATUS.processIng,
 					progressUpload: 1
-				});
+				})
 			}
-
-			console.log(body);
-
 			let {
 				input,
 				output
 			} = JSON.parse(body)
-
-			
 			//下载
 			progress(request(output.url), {})
 				.on('progress', function (state) {
-					console.log('progress', state);
+					console.log('progress', state)
 					mainWindow.webContents.send('push', {
 						id: item.id,
 						status: IMAGE_STATUS.processIng,
 						progressDownload: state.percent.toFixed(2),
-					});
+					})
 				})
 				.on('error', function (err) {
 					console.log('下载失败', err)
+					cb();
 					mainWindow.webContents.send('push', {
 						id: item.id,
 						status: IMAGE_STATUS.error
-					});
+					})
 				})
 				.on('end', function () {
 					console.log('下载完成')
+					cb();
 					mainWindow.webContents.send('push', {
 						id: item.id,
 						status: IMAGE_STATUS.success,
@@ -138,9 +150,9 @@ electron.ipcMain.on('open-file', (event, arg) => {
 						ratio: output.ratio,
 						inputSize: input.size,
 						outputSize: output.size
-					});
+					})
 				})
-				.pipe(fs.createWriteStream(item.path));
-		});
-	});
-});
+				.pipe(fs.createWriteStream(item.path))
+		})
+	})
+})
