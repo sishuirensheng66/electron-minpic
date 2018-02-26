@@ -15,6 +15,7 @@
     "electron": "~1.8.2",
     "glob": "^7.1.2",
     "image-size": "^0.6.2",
+    "lowdb": "^1.0.0",
     "md5": "^2.2.1",
     "node-mac-notifier": "^0.0.13"
   },

@@ -13,34 +13,67 @@ const sizeOf = require('image-size')
 const {
 	IMAGE_STATUS
 } = require('./const.js')
-let mainWindow
+let win
 
 let minList = []; //图片列表
 let minIndex = 0;
 
+
+const low = require('lowdb')
+const FileSync = require('lowdb/adapters/FileSync')
+
+const adapter = new FileSync('db.json')
+const db = low(adapter)
+
+
+
+// return;
+electron.ipcMain.on('setKey', (event, arg) => {
+	db.set('list', arg)
+		.write();
+
+	//或者  db.get('now').value()  
+
+
+
+	if (arg.length == 1 || !arg.find((item) => {
+			return db.get('now').value() == item.key
+		})) {
+		db.set('now', arg[0].key)
+			.write()
+	}
+});
+// console.log(db.get('now').value())
+
+
+
+
 function createWindow() {
 
-	mainWindow = new BrowserWindow({
+	win = new BrowserWindow({
 		// transparent: true,
 		// titleBarStyle: 'hidden',
 		// frame: false,
-		width: 800,
-		height: 320,
+		width: 620,
+		height: 600,
 		icon: '/Users/BraisedCakes/Desktop/tinypng_output/git_white.png'
 	})
-	mainWindow.setResizable(true)
+	// win.setResizable(false)
 
-	mainWindow.loadURL(url.format({
+	// setTimeout(()=>{
+	// 	win.setContentSize(320,600);
+	// }, 1000)
+	win.loadURL(url.format({
 		pathname: path.join(__dirname, 'index.html'),
 		protocol: 'file:',
 		slashes: true
 	}))
-	mainWindow.webContents.on('did-finish-load', () => {
-
+	win.webContents.on('did-finish-load', () => {
+		win.webContents.send('getKey', db.get('list').value())
 	})
 
-	mainWindow.on('closed', function () {
-		mainWindow = null
+	win.on('closed', function () {
+		win = null
 	})
 
 }
@@ -52,14 +85,14 @@ app.on('window-all-closed', function () {
 })
 
 app.on('activate', function () {
-	if (mainWindow === null) {
+	if (win === null) {
 		createWindow()
 	}
 })
 
 
 
-function cb() {
+function imageDone() {
 	minIndex++;
 	if (minIndex == minList.length) {
 		//如果所有队列均执行完毕，则调取系统通知
@@ -88,9 +121,9 @@ electron.ipcMain.on('open-file', (event, arg) => {
 		}
 	})
 
-	mainWindow.webContents.send('getImageList', minList)
+	win.webContents.send('getImageList', minList)
 
-	let token = new Buffer('api:' + 'sn07kskC9G9n-PCTbZXSgpH2IXKXvYxS').toString('base64') // prep key
+	let token = new Buffer('api:' + db.get('now').value()).toString('base64') // prep key
 	minList.forEach((item) => {
 		let buf = fs.readFileSync(item.path)
 		request.post({
@@ -104,15 +137,15 @@ electron.ipcMain.on('open-file', (event, arg) => {
 		}, function (err, res, body) {
 			//上传失败
 			if (err) {
-				console.log(err)
-				mainWindow.webContents.send('push', {
+				console.log('上传失败', err)
+				win.webContents.send('push', {
 					id: item.id,
 					status: IMAGE_STATUS.error
 				})
-				cb();
+				imageDone();
 				return
 			} else {
-				mainWindow.webContents.send('push', {
+				win.webContents.send('push', {
 					id: item.id,
 					status: IMAGE_STATUS.processIng,
 					progressUpload: 1
@@ -125,8 +158,7 @@ electron.ipcMain.on('open-file', (event, arg) => {
 			//下载
 			progress(request(output.url), {})
 				.on('progress', function (state) {
-					console.log('progress', state)
-					mainWindow.webContents.send('push', {
+					win.webContents.send('push', {
 						id: item.id,
 						status: IMAGE_STATUS.processIng,
 						progressDownload: state.percent.toFixed(2),
@@ -134,16 +166,15 @@ electron.ipcMain.on('open-file', (event, arg) => {
 				})
 				.on('error', function (err) {
 					console.log('下载失败', err)
-					cb();
-					mainWindow.webContents.send('push', {
+					imageDone();
+					win.webContents.send('push', {
 						id: item.id,
 						status: IMAGE_STATUS.error
 					})
 				})
 				.on('end', function () {
-					console.log('下载完成')
-					cb();
-					mainWindow.webContents.send('push', {
+					imageDone();
+					win.webContents.send('push', {
 						id: item.id,
 						status: IMAGE_STATUS.success,
 						progressDownload: 1,

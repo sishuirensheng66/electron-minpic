@@ -31,14 +31,9 @@
 	}
 
 	.drag {
-		/* position: relative; */
-		/* margin:0 auto; */
 		display: flex;
-		/* justify-content: center; */
 		align-items: center;
 		flex-direction: column;
-		/* margin-top: 50px; */
-		/* padding-top: 200px; */
 		height: 250px;
 		overflow: hidden;
 	}
@@ -128,6 +123,17 @@
 		border-left: 8px solid transparent;
 		left: 0;
 	}
+
+	footer {
+		background: #fff;
+		height: 200px;
+		display: flex;
+		justify-content: center;
+	}
+
+	input {
+		outline: none;
+	}
 </style>
 
 <body>
@@ -160,12 +166,22 @@
 							<div :style="{'-webkit-transform' : 'rotate(' + (45 + item.progressDownload * 180) + 'deg)'}" class="circleProgress leftcircle"></div>
 						</div>
 					</div>
-
-
 				</li>
 			</ul>
 			<!-- <p>拖拽PNG/JPG文件到这里!</p> -->
 		</section>
+		<footer>
+			<p @click="keylist.push({key:''})">+</p>
+			<div>
+				<label>API key</label>
+				<ul>
+					<li v-for="(item, index) in keylist">
+						<input v-model="item.key" class="api_key" type="text" />
+						<span v-if="index != 0" @click="keylist.splice(index, 1)">-----</span>
+					</li>
+				</ul>
+			</div>
+		</footer>
 	</div>
 	<script>
 		// You can also require other files to run in this process

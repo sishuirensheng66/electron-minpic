@@ -10,14 +10,32 @@ const {
 var app = new Vue({
     el: '#app',
     data: {
-        data: []
+        data: [],
+        keylist: [{
+            key: ''
+        }]
     },
     methods: {
         openFile() {
             ipcRenderer.send('open-file', '点击了拖拽')
         }
+    },
+    watch: {
+        keylist: {
+            handler: function () {
+                ipcRenderer.send('setKey', this.keylist)
+            },
+            deep: true
+        }
     }
-})
+});
+
+ipcRenderer.on('getKey', (event, arg) => {
+    app.$set(app, 'keylist', arg || [{
+        key : ''
+    }]);
+});
+
 /**
  * 某张图片上传中
  */
@@ -26,16 +44,6 @@ ipcRenderer.on('push', (event, arg) => {
     const item = getItem(index);
     app.$set(app.data, index, Object.assign(item, arg));
     console.log(arg)
-});
-
-/**
- * 所有都done， 不管成功还是失败
- */
-ipcRenderer.on('allDone', (event, arg) => {
-    // alert(999)
-    // new Notification('标题', {
-    //     body: '通知正文内容'
-    // })
 });
 
 ipcRenderer.on('getImageList', (event, arg) => {
@@ -57,4 +65,8 @@ function getIndex(id) {
 
 function getItem(index) {
     return app.data[index];
-}
+};
+
+$(document).on('input', '.api_key', () => {
+    console.log(app.keylist)
+});
