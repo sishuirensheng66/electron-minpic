@@ -17,7 +17,9 @@ var app = new Vue({
     },
     methods: {
         openFile() {
-            ipcRenderer.send('open-file', '点击了拖拽')
+
+            // return;
+            ipcRenderer.send('open-file')
         }
     },
     watch: {
@@ -30,9 +32,25 @@ var app = new Vue({
     }
 });
 
+
+document.addEventListener('drop', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    let json = [];
+    for (let f of e.dataTransfer.files) {
+        console.log('File(s) you dragged here: ', f.path)
+        json.push(f.path)
+    }
+    ipcRenderer.send('open-file', json)
+});
+document.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+});
+
 ipcRenderer.on('getKey', (event, arg) => {
     app.$set(app, 'keylist', arg || [{
-        key : ''
+        key: ''
     }]);
 });
 

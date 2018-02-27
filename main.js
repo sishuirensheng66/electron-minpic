@@ -43,11 +43,6 @@ electron.ipcMain.on('setKey', (event, arg) => {
 			.write()
 	}
 });
-// console.log(db.get('now').value())
-
-
-
-
 function createWindow() {
 
 	win = new BrowserWindow({
@@ -104,25 +99,38 @@ function imageDone() {
 }
 
 
-electron.ipcMain.on('open-file', (event, arg) => {
-	let source = electron.dialog.showOpenDialog({
-		properties: ['openFile', 'openDirectory', 'multiSelections']
-	})[0]
-	minList = glob.sync(path.resolve(source, '**/*.@(jpg|png|jpeg)'))
-
+electron.ipcMain.on('open-file', (event, source) => {
+	if (!source) {
+		source = electron.dialog.showOpenDialog({
+			properties: ['openFile', 'openDirectory', 'multiSelections']
+		})
+	}
+	if (!source) return
+	// var ddd = [];
+	source.forEach((item) => {
+		if (fs.statSync(item).isDirectory()) {
+			minList.push(...glob.sync(path.resolve(item, '**/*.@(jpg|png|jpeg)')))
+		} else if (/(png|jpg|jpeg)$/.test(item)) {
+			minList.push(item)
+		}
+	});
 	minList = minList.map((item) => {
-		return {
-			path: item,
-			basename: path.basename(item),
-			id: md5(item),
-			width: sizeOf(item).width,
-			height: sizeOf(item).height,
-			status: IMAGE_STATUS.processIng
+		if (typeof item == 'object') {
+			return item
+		} else {
+			return {
+				path: item,
+				basename: path.basename(item),
+				id: md5(item),
+				width: sizeOf(item).width,
+				height: sizeOf(item).height,
+				status: IMAGE_STATUS.processIng
+			}
 		}
 	})
 
 	win.webContents.send('getImageList', minList)
-
+	return;
 	let token = new Buffer('api:' + db.get('now').value()).toString('base64') // prep key
 	minList.forEach((item) => {
 		let buf = fs.readFileSync(item.path)
