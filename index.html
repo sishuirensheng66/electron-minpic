@@ -150,7 +150,7 @@
 							<p style="color:#fff;padding-top:4px;font-size:14px;">{{item.basename}}</p>
 							<p v-if="item.status === 'success'" style="color:#6defc9;font-size:12px;">
 								<span>-{{((item.inputSize - item.outputSize) / 1000).toFixed(2)}}k</span>
-								<span>({{((1 - item.ratio) * 100).toFixed(1)}}%)</span>
+								<span>({{((1 - item.outputSize / item.inputSize) * 100).toFixed(1)}}%)</span>
 							</p>
 							<p v-if="item.status === 'processIng'" style="color:#a1d3e9;font-size:12px;">处理中</p>
 							<p v-if="item.status === 'error'" style="color:rgb(223, 85, 85);font-size:12px;">失败</p>

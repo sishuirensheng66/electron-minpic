@@ -10,7 +10,6 @@ const url = require('url')
 const md5 = require('md5')
 const glob = require('glob')
 const sizeOf = require('image-size')
-const tinify = require("tinify")
 const {
 	IMAGE_STATUS
 } = require('./const.js')
@@ -131,32 +130,74 @@ electron.ipcMain.on('open-file', (event, source) => {
 	})
 
 	win.webContents.send('getImageList', minList)
-	tinify.key = db.get('now').value();
+	// return;
+	let token = new Buffer('api:' + db.get('now').value()).toString('base64') // prep key
 	minList.forEach((item) => {
-		// console.log(fs.statSync(item.path).size / 1000);
-		// return;
-		let inputSize = fs.statSync(item.path).size;
-		let image = tinify.fromFile(item.path)
-		console.log('开始下载')
-		image.toFile(item.path, err => {
+		let buf = fs.readFileSync(item.path)
+		request.post({
+			url: 'https://api.tinypng.com/shrink',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+				'Authorization': 'Basic ' + token
+			},
+			strictSSL: false,
+			body: buf
+		}, function (err, res, body) {
+			//上传失败
 			if (err) {
+				console.log('上传失败', err)
 				win.webContents.send('push', {
 					id: item.id,
 					status: IMAGE_STATUS.error
 				})
-				console.log('下载失败');
-				return;
+				imageDone();
+				return
+			} else {
+				win.webContents.send('push', {
+					id: item.id,
+					status: IMAGE_STATUS.processIng,
+					progressUpload: 1
+				})
 			}
-			let outputSize = fs.statSync(item.path).size;
-			console.log('下载成功');
-			win.webContents.send('push', {
-				id: item.id,
-				status: IMAGE_STATUS.success,
-				progressDownload: 1,
-				inputSize: inputSize,
-				outputSize: outputSize
-			});
-			imageDone();
-		});
-	});
+			let {
+				input,
+				output
+			} = JSON.parse(body)
+			console.log(body);
+			return;
+			//下载
+			progress(request(output.url), {})
+				.on('progress', function (state) {
+					win.webContents.send('push', {
+						id: item.id,
+						status: IMAGE_STATUS.processIng,
+						progressDownload: state.percent.toFixed(2),
+					})
+				})
+				.on('error', function (err) {
+					console.log('下载失败', err)
+					imageDone();
+					win.webContents.send('push', {
+						id: item.id,
+						status: IMAGE_STATUS.error
+					})
+				})
+				.on('end', function (a,b,c) {
+					console.log(a)
+					console.log(b)
+					console.log(c)
+					imageDone();
+					win.webContents.send('push', {
+						id: item.id,
+						status: IMAGE_STATUS.success,
+						progressDownload: 1,
+						ratio: output.ratio,
+						inputSize: input.size,
+						outputSize: output.size
+					})
+				})
+				// .pipe(fs.createWriteStream(item.path))
+				.pipe(fs.createWriteStream('/Users/BraisedCakes/.qaep-templates/obj/aaa/1.jpg'))
+		})
+	})
 })
