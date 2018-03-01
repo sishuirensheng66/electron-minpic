@@ -11,14 +11,10 @@ var app = new Vue({
     el: '#app',
     data: {
         data: [],
-        keylist: [{
-            key: ''
-        }]
+        keylist: []
     },
     methods: {
         openFile() {
-
-            // return;
             ipcRenderer.send('open-file')
         }
     },

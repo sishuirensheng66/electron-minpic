@@ -15,28 +15,17 @@ const {
 	IMAGE_STATUS
 } = require('./const.js')
 let win
-
 let minList = []; //图片列表
 let minIndex = 0;
-
-
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
 
 const adapter = new FileSync('db.json')
 const db = low(adapter)
 
-
-
-// return;
 electron.ipcMain.on('setKey', (event, arg) => {
 	db.set('list', arg)
 		.write();
-
-	//或者  db.get('now').value()  
-
-
-
 	if (arg.length == 1 || !arg.find((item) => {
 			return db.get('now').value() == item.key
 		})) {
@@ -107,7 +96,6 @@ electron.ipcMain.on('open-file', (event, source) => {
 		})
 	}
 	if (!source) return
-	// var ddd = [];
 	source.forEach((item) => {
 		if (fs.statSync(item).isDirectory()) {
 			minList.push(...glob.sync(path.resolve(item, '**/*.@(jpg|png|jpeg)')))
@@ -128,13 +116,10 @@ electron.ipcMain.on('open-file', (event, source) => {
 				status: IMAGE_STATUS.processIng
 			}
 		}
-	})
-
+	});
 	win.webContents.send('getImageList', minList)
 	tinify.key = db.get('now').value();
 	minList.forEach((item) => {
-		// console.log(fs.statSync(item.path).size / 1000);
-		// return;
 		let inputSize = fs.statSync(item.path).size;
 		let image = tinify.fromFile(item.path)
 		console.log('开始下载')
