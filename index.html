@@ -145,7 +145,7 @@
 			Minpic for Mac
 		</header>
 		<section @click="openFile" class="drag">
-			
+
 			<ul class="img-wrapper">
 				<li class="item" v-for="item in data">
 					<div class="item-wrap" style="display:flex;height:48px;">
@@ -173,6 +173,13 @@
 				</li>
 			</ul>
 			<!-- <p>拖拽PNG/JPG文件到这里!</p> -->
+		</section>
+		<section style="display:flex;justify-content:space-between;padding:0 12px;">
+			<p>text内容</p>
+			<div>
+				<img style="width:20px;height:20px;cursor:pointer;margin-right:10px;" src="./image/folder.png" />
+				<img style="width:20px;height:20px;cursor:pointer;" src="./image/icon_settings.png" />
+			</div>
 		</section>
 		<footer>
 			<p @click="keylist.push({key:''})">+</p>
