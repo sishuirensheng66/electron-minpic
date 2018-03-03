@@ -33,17 +33,24 @@ electron.ipcMain.on('setKey', (event, arg) => {
 			.write()
 	}
 });
+
+
+electron.ipcMain.on('windowsChangeSize', (event, arg) => {
+	win.setContentSize(arg.width, arg.height);
+});
+
+
 function createWindow() {
 
 	win = new BrowserWindow({
-		// transparent: true,
-		// titleBarStyle: 'hidden',
-		// frame: false,
-		width: 620,
-		height: 600,
+		transparent: true,
+		titleBarStyle: 'hidden',
+		frame: false,
+		width: 320,
+		height: 297,
 		icon: '/Users/BraisedCakes/Desktop/tinypng_output/git_white.png'
 	})
-	// win.setResizable(false)
+	win.setResizable(false)
 
 	// setTimeout(()=>{
 	// 	win.setContentSize(320,600);

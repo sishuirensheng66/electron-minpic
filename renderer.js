@@ -11,11 +11,19 @@ var app = new Vue({
     el: '#app',
     data: {
         data: [],
-        keylist: []
+        keylist: [],
+        setBtn : false
     },
     methods: {
         openFile() {
             ipcRenderer.send('open-file')
+        },
+        changeSize(){
+            ipcRenderer.send('windowsChangeSize', {
+                width : 320,
+                height : !this.setBtn ? 397 : 297
+            })
+            this.setBtn = !this.setBtn;
         }
     },
     watch: {
