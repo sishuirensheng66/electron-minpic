@@ -22,6 +22,7 @@ const FileSync = require('lowdb/adapters/FileSync')
 
 const adapter = new FileSync('db.json')
 const db = low(adapter)
+const is_dev = true;
 
 electron.ipcMain.on('setKey', (event, arg) => {
 	db.set('list', arg)
@@ -43,18 +44,19 @@ electron.ipcMain.on('windowsChangeSize', (event, arg) => {
 function createWindow() {
 
 	win = new BrowserWindow({
-		transparent: true,
-		titleBarStyle: 'hidden',
-		frame: false,
-		width: 320,
-		height: 297,
-		icon: '/Users/BraisedCakes/Desktop/tinypng_output/git_white.png'
+		transparent: is_dev ? true : false,
+		titleBarStyle: is_dev ? 'hidden' : 'default',
+		frame: is_dev ? false : true,
+		width: is_dev ? 320 : 500,
+		height: is_dev ? 297 : 500,
+		icon: '/Users/BraisedCakes/Desktop/tinypng_output/git_white.png',
+		webPreferences: {
+			devTools: is_dev ? false : true
+		}
 	})
-	win.setResizable(false)
-
-	// setTimeout(()=>{
-	// 	win.setContentSize(320,600);
-	// }, 1000)
+	// win.devTools
+	win.setResizable(is_dev ? false : true)
+	win.openDevTools();
 	win.loadURL(url.format({
 		pathname: path.join(__dirname, 'index.html'),
 		protocol: 'file:',

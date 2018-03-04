@@ -16,11 +16,16 @@
 	}
 
 	html {
-		background: linear-gradient(#24aad6, #197ab9);
+		/* background: linear-gradient(#24aad6, #197ab9); */
 		height: 100%;
 		font-size: 13px;
 		line-height: 21px;
 		/* position: relative; */
+	}
+
+	.app2 {
+		background: linear-gradient(#24aad6, #197ab9);
+		/* height: 100%; */
 	}
 
 	header {
@@ -141,46 +146,49 @@
 
 <body>
 	<div id="app">
-		<header>
-			Minpic for Mac
-		</header>
-		<section @click="openFile" class="drag">
+		<div class="app2">
+			<header>
+				Minpic for Mac
+			</header>
+			<section @click="openFile" class="drag">
 
-			<ul class="img-wrapper">
-				<li class="item" v-for="item in data">
-					<div class="item-wrap" style="display:flex;height:48px;">
-						<div class="item-img" :style="item.style"></div>
-						<div class="aab" style="margin-left:10px;">
-							<p style="color:#fff;padding-top:4px;font-size:14px;">{{item.basename}}</p>
-							<p v-if="item.status === 'success'" style="color:#6defc9;font-size:12px;">
-								<span>-{{((item.inputSize - item.outputSize) / 1000).toFixed(2)}}k</span>
-								<span>({{((1 - item.outputSize / item.inputSize) * 100).toFixed(1)}}%)</span>
-							</p>
-							<p v-if="item.status === 'processIng'" style="color:#a1d3e9;font-size:12px;">处理中</p>
-							<p v-if="item.status === 'error'" style="color:rgb(223, 85, 85);font-size:12px;">失败</p>
+				<ul class="img-wrapper">
+					<li class="item" v-for="item in data">
+						<div class="item-wrap" style="display:flex;height:48px;">
+							<div class="item-img" :style="item.style"></div>
+							<div class="aab" style="margin-left:10px;">
+								<p style="color:#fff;padding-top:4px;font-size:14px;">{{item.basename}}</p>
+								<p v-if="item.status === 'success'" style="color:#6defc9;font-size:12px;">
+									<span>-{{((item.inputSize - item.outputSize) / 1000).toFixed(2)}}k</span>
+									<span>({{((1 - item.outputSize / item.inputSize) * 100).toFixed(1)}}%)</span>
+								</p>
+								<p v-if="item.status === 'processIng'" style="color:#a1d3e9;font-size:12px;">处理中</p>
+								<p v-if="item.status === 'error'" style="color:rgb(223, 85, 85);font-size:12px;">失败</p>
+							</div>
 						</div>
-					</div>
-					<!-- 下载完成 -->
-					<div v-if="item.status === 'success'" class="circle"></div>
-					<div v-if="item.status === 'processIng'" class="circleProgress_wrapper">
-						<div class="wrapper right">
-							<div :style="{'-webkit-transform' : 'rotate(' + (45 + item.progressUpload * 180) + 'deg)'}" class="circleProgress rightcircle"></div>
+						<!-- 下载完成 -->
+						<div v-if="item.status === 'success'" class="circle"></div>
+						<div v-if="item.status === 'processIng'" class="circleProgress_wrapper">
+							<div class="wrapper right">
+								<div :style="{'-webkit-transform' : 'rotate(' + (45 + item.progressUpload * 180) + 'deg)'}" class="circleProgress rightcircle"></div>
+							</div>
+							<div class="wrapper left">
+								<div :style="{'-webkit-transform' : 'rotate(' + (45 + item.progressDownload * 180) + 'deg)'}" class="circleProgress leftcircle"></div>
+							</div>
 						</div>
-						<div class="wrapper left">
-							<div :style="{'-webkit-transform' : 'rotate(' + (45 + item.progressDownload * 180) + 'deg)'}" class="circleProgress leftcircle"></div>
-						</div>
-					</div>
-				</li>
-			</ul>
-			<!-- <p>拖拽PNG/JPG文件到这里!</p> -->
-		</section>
-		<section style="box-shadow:0px 8px 8px rgba(0,0,0,0.2);position:relative;z-index:999;display:flex;justify-content:space-between;padding:0 12px;">
-			<p>0个任务</p>
-			<div>
-				<img style="width:20px;height:20px;cursor:pointer;margin-right:10px;" src="./image/folder.png" />
-				<img @click="changeSize" style="width:20px;height:20px;cursor:pointer;" src="./image/icon_settings.png" />
-			</div>
-		</section>
+					</li>
+				</ul>
+				<!-- <p>拖拽PNG/JPG文件到这里!</p> -->
+			</section>
+			<section style="box-shadow:0px 8px 8px rgba(0,0,0,0.2);position:relative;z-index:999;display:flex;justify-content:space-between;padding:0 12px;">
+				<p>0个任务</p>
+				<div>
+					<img style="width:20px;height:20px;cursor:pointer;margin-right:10px;" src="./image/folder.png" />
+					<img @click="changeSize" style="width:20px;height:20px;cursor:pointer;" src="./image/icon_settings.png" />
+				</div>
+			</section>
+		</div>
+
 		<footer style="position:relative">
 			<p @click="keylist.push({key:''})">+</p>
 			<div>
